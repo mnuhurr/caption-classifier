@@ -1,34 +1,9 @@
-from pathlib import Path
-
 import flask
 import torch
 
-from models.classifier import AttentionClassifierConfig, AttentionClassifier
-from models.classifier import LSTMClassifierConfig, LSTMClassifier
-from models.classifier import ClassifierConfig, TransformerClassifier
-
 from common import read_yaml
+from utils import load_checkpoint
 from utils import load_tokenizer
-
-
-def load_checkpoint(filename: str | Path) -> torch.nn.Module:
-    ckpt = torch.load(filename, map_location='cpu')
-
-    cfg = ckpt['config']
-    print(cfg)
-    if 'epoch' in ckpt:
-        print('model saved on epoch {}'.format(ckpt['epoch']))
-
-    if isinstance(cfg, AttentionClassifierConfig):
-        model = AttentionClassifier(cfg)
-    elif isinstance(cfg, LSTMClassifierConfig):
-        model = LSTMClassifier(cfg)
-    elif isinstance(cfg, ClassifierConfig):
-        model = TransformerClassifier(cfg)
-
-    model.load_state_dict(ckpt['state_dict'])
-
-    return model
 
 
 def clean_token(t: str):

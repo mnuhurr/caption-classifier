@@ -1,8 +1,14 @@
 from pathlib import Path
 
+import torch
+
 from tokenizers.implementations import ByteLevelBPETokenizer
 from tokenizers.processors import BertProcessing
 from tokenizers.normalizers import BertNormalizer
+
+from models.classifier import AttentionClassifierConfig, AttentionClassifier
+from models.classifier import LSTMClassifierConfig, LSTMClassifier
+from models.classifier import ClassifierConfig, TransformerClassifier
 
 
 def load_tokenizer(tokenizer_path, max_length=None):
@@ -22,4 +28,24 @@ def load_tokenizer(tokenizer_path, max_length=None):
 
     return tokenizer
 
+
+
+def load_checkpoint(filename: str | Path) -> torch.nn.Module:
+    ckpt = torch.load(filename, map_location='cpu')
+
+    cfg = ckpt['config']
+    print(cfg)
+    if 'epoch' in ckpt:
+        print('model saved on epoch {}'.format(ckpt['epoch']))
+
+    if isinstance(cfg, AttentionClassifierConfig):
+        model = AttentionClassifier(cfg)
+    elif isinstance(cfg, LSTMClassifierConfig):
+        model = LSTMClassifier(cfg)
+    elif isinstance(cfg, ClassifierConfig):
+        model = TransformerClassifier(cfg)
+
+    model.load_state_dict(ckpt['state_dict'])
+
+    return model
 
