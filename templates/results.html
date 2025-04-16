@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Caption classifier{% endblock %}
+{% block head %}
+<script src='https://cdn.plot.ly/plotly-3.0.1.min.js'></script>
+{% endblock %}
+{% block header %}<h1>Caption classifier</h1>{% endblock %}
+{% block content %}
+<form method="POST">
+Caption: <input name="prompt" type="text" value="{{ default_prompt }}" size="40"/>
+<input type="submit" value="go!"/><br/>
+</form>
+
+classification result is: {{ result }} (p={{ probs }})<br/>
+
+<div id="tokenScores" style="width: 500px;"></div>
+<script>
+var data = [
+    {
+        x: {{ tokens|safe }},
+        y: {{ scores }},
+        type: 'bar'
+    }
+];
+
+var layout = {
+  title: {
+    text: 'attention scores'
+  },
+
+  showlegend: false,
+
+  xaxis: {
+    tickangle: -60
+  },
+
+  bargap :0.05
+};
+
+Plotly.newPlot('tokenScores', data, layout);
+</script>
+
+
+
+{% endblock %}
+{% block footer %}{% endblock %}
+

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Caption classifier{% endblock %}
+{% block header %}<h1>Caption classifier</h1>{% endblock %}
+{% block content %}
+<form method="POST">
+Caption: <input name="prompt" type="text" value="{{ default_prompt }}" size="40"/>
+<input type="submit" value="go!"/><br/>
+</form>
+{% endblock %}
+{% block footer %}{% endblock %}
+
