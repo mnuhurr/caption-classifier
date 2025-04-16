@@ -151,7 +151,7 @@ def main():
     #model = AttentionClassifier(model_cfg)
     #model = LSTMClassifier(model_cfg)
     model = TransformerClassifier(model_cfg)
-    
+
     logger.info(f'model size {model_size(model) / 1e6:.1f}M')
     model = model.to(device)
 
@@ -162,8 +162,8 @@ def main():
         max_lr=learning_rate,
         pct_start=warmup_pct)
 
-    #best_loss = float('inf')
-    best_score = 0.0
+    best_loss = float('inf')
+    #best_score = 0.0
 
     for epoch in range(n_epochs):
         train_loss = train_epoch(
@@ -176,17 +176,12 @@ def main():
             device=device)
 
         val_loss, confmat = validate_epoch(model, val_loader, device=device)
+        val_conf_loss = confmat[0, 1] + confmat[1, 0]
 
-        logger.info(f'epoch {epoch + 1} - training loss {train_loss:.4f} - validation loss {val_loss:.4f}')
-        print(confmat)
+        logger.info(f'epoch {epoch + 1} - training loss {train_loss:.4f} - validation loss {val_loss:.4f} - confusion matrix off diagonal mass {val_conf_loss.item():.4f}')
 
-        #val_conf_loss = confmat[0, 1] + confmat[1, 0]
-        val_score = confmat[0, 0] * confmat[1, 1]
-
-        #if val_conf_loss < best_loss:
-        if val_score > best_score:
-            #best_loss = val_conf_loss
-            best_score = val_score
+        if val_conf_loss < best_loss:
+            best_loss = val_conf_loss
             ckpt = {
                 'config': model_cfg,
                 'state_dict': model.state_dict(),

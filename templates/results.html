@@ -12,29 +12,37 @@ Caption: <input name="prompt" type="text" value="{{ default_prompt }}" size="40"
 
 classification result is: {{ result }} (p={{ probs }})<br/>
 
-<div id="tokenScores" style="width: 500px;"></div>
+<div id="tokenScores" style="width: 600px;"></div>
 <script>
-var data = [
-    {
-        x: {{ tokens|safe }},
-        y: {{ scores }},
-        type: 'bar'
-    }
-];
-
-var layout = {
-  title: {
-    text: 'attention scores'
-  },
-
-  showlegend: false,
-
-  xaxis: {
-    tickangle: -60
-  },
-
-  bargap :0.05
+var first = {
+    x: {{ tokens|safe }},
+    y: {{ scores }},
+    name: 'first layer',
+    type: 'bar'
 };
+
+var averaged = {
+    x: {{ tokens|safe }},
+    y: {{ avg_scores }},
+    name: 'averaged',
+    type: 'bar'
+};
+
+var layout = { 
+    title: {
+        text: 'attention scores'
+    },
+
+    xaxis: {
+        tickangle: -60
+    },
+
+    bargap: 0.1,
+    showlegend: true,
+    barmode: 'group'
+};
+
+var data = [first, averaged];
 
 Plotly.newPlot('tokenScores', data, layout);
 </script>
