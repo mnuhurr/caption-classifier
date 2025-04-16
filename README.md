@@ -1,4 +1,12 @@
-example `settings.yaml`:
+
+## Running
+1. fit tokenizer (`python fit_tokenizer.py`)
+2. prepare tokens (`python prepare_tokens.py`)
+3. train the model (`python train.py`)
+4. run the app (`python run flaskapp.py`)
+
+
+### example `settings.yaml`:
 ```
 train_captions:
   image:
