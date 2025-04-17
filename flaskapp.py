@@ -25,7 +25,7 @@ class EndpointAction:
 
 
 class ClassifierApp:
-    def __init__(self, model, tokenizer, port=58000, device: torch.device | None = None):
+    def __init__(self, model, tokenizer, port=58000, device: torch.device | None = None, include_avg: bool = False):
         self.app = flask.Flask(__name__)
 
         self.device = device if device is not None else torch.device('cpu')
@@ -34,6 +34,9 @@ class ClassifierApp:
         self.model = model.to(self.device)
         self.model.eval()
         self.port = port
+
+        # some settings
+        self.include_avg = include_avg
 
         self.add_endpoint(endpoint='/', endpoint_name='front', handler=self.front, mimetype='text/html', methods=['GET', 'POST'])
 
@@ -54,10 +57,13 @@ class ClassifierApp:
         p = torch.softmax(y_pred[0], dim=-1).cpu().numpy()
 
         # average scores
-        avg_scores = torch.stack([s[0, 0, 1:-1].cpu() for s in scores])
-        avg_scores = list(avg_scores.mean(dim=0).numpy())
+        if self.include_avg:
+            avg_scores = torch.stack([s[0, 0, 1:-1].cpu() for s in scores])
+            avg_scores = avg_scores.mean(dim=0).numpy().tolist()
+        else:
+            avg_scores = None
 
-        scores = [list(s[0, 0, 1:-1].cpu().numpy()) for s in scores]
+        scores = [s[0, 0, 1:-1].cpu().numpy().tolist() for s in scores]
 
         return m, p, scores, avg_scores, decoded
 
@@ -83,7 +89,7 @@ def main(config_fn='settings.yaml'):
 
     model = load_checkpoint(cfg.get('model_path'))
 
-    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000)
+    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000, include_avg=True)
     app.run()
 
 

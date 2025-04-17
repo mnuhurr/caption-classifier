@@ -14,23 +14,6 @@ classification result is: {{ result }} (p={{ probs }})<br/>
 
 <div id="tokenScores" style="width: 600px;"></div>
 <script>
-/*
-var first = {
-    x: {{ tokens|safe }},
-    y: {{ scores }},
-    name: 'first layer',
-    type: 'bar'
-};
-
-var averaged = {
-    x: {{ tokens|safe }},
-    y: {{ avg_scores }},
-    name: 'averaged',
-    type: 'bar'
-};
-var data = [first, averaged];
-*/
-
 var data = [
 {% for sco in scores %}
     {
@@ -41,12 +24,14 @@ var data = [
     },
 {% endfor %}
 
+{% if avg_scores %}
     {
         x: {{ tokens|safe }},
         y: {{ avg_scores }},
         name: 'avg scores',
         type: 'bar'
     }
+{% endif %}
 ];
 
 var layout = { 
