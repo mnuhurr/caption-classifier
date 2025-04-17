@@ -14,6 +14,7 @@ classification result is: {{ result }} (p={{ probs }})<br/>
 
 <div id="tokenScores" style="width: 600px;"></div>
 <script>
+/*
 var first = {
     x: {{ tokens|safe }},
     y: {{ scores }},
@@ -27,6 +28,26 @@ var averaged = {
     name: 'averaged',
     type: 'bar'
 };
+var data = [first, averaged];
+*/
+
+var data = [
+{% for sco in scores %}
+    {
+        x: {{ tokens|safe }},
+        y: {{ sco }},
+        name: 'layer_{{ loop.index0}}',
+        type: 'bar'
+    },
+{% endfor %}
+
+    {
+        x: {{ tokens|safe }},
+        y: {{ avg_scores }},
+        name: 'avg scores',
+        type: 'bar'
+    }
+];
 
 var layout = { 
     title: {
@@ -37,12 +58,11 @@ var layout = {
         tickangle: -60
     },
 
-    bargap: 0.1,
+    bargap: 0.2,
     showlegend: true,
     barmode: 'group'
 };
 
-var data = [first, averaged];
 
 Plotly.newPlot('tokenScores', data, layout);
 </script>

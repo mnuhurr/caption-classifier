@@ -53,12 +53,13 @@ class ClassifierApp:
         m = 'audio' if torch.argmax(y_pred[0], dim=-1).item() == 0 else 'image'
         p = torch.softmax(y_pred[0], dim=-1).cpu().numpy()
 
-        s1 = scores[0][0, 0, 1:-1].cpu()
-        s2 = torch.stack([s[0, 0, 1:-1].cpu() for s in scores])
-        print(s2.shape)
-        s2 = s2.mean(dim=0)
+        # average scores
+        avg_scores = torch.stack([s[0, 0, 1:-1].cpu() for s in scores])
+        avg_scores = list(avg_scores.mean(dim=0).numpy())
 
-        return m, p, list(s1.numpy()), list(s2.numpy()), decoded
+        scores = [list(s[0, 0, 1:-1].cpu().numpy()) for s in scores]
+
+        return m, p, scores, avg_scores, decoded
 
     def front(self, **kwargs):
         if flask.request.method == 'GET':
@@ -69,7 +70,7 @@ class ClassifierApp:
             res, probs, scores, avg_scores, tokens = self.classify(prompt)
 
             # add the number to the token so that they don't get merged in the plotting
-            tokens = list(map(lambda t: f'{t[0]}_{t[1]}', enumerate(tokens)))
+            tokens = list(map(lambda t: f'{t[0]}: {t[1]}', enumerate(tokens)))
             #tokens = '[' + ', '.join(map(lambda s: f'"{s}"', tokens)) + ']'
             return flask.render_template('results.html', result=res, probs=probs, tokens=tokens, scores=scores, avg_scores=avg_scores)
 
