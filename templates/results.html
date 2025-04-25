@@ -19,7 +19,8 @@ classification result: {{ result }}<br/>
 var cls_data = [{
     values: {{ probs }},
     labels: ['audio', 'image'],
-    type: 'pie'
+    type: 'pie',
+    sort: false,
 }];
 
 var cls_layout = {
