@@ -54,7 +54,7 @@ class ClassifierApp:
         decoded = [clean_token(self.tokenizer.id_to_token(t.item())) for t in tokens[0][1:-1]]
 
         m = 'audio' if torch.argmax(y_pred[0], dim=-1).item() == 0 else 'image'
-        p = torch.softmax(y_pred[0], dim=-1).cpu().numpy()
+        p = torch.softmax(y_pred[0], dim=-1).cpu().numpy().tolist()
 
         # average scores
         if self.include_avg:
@@ -89,7 +89,7 @@ def main(config_fn='settings.yaml'):
 
     model = load_checkpoint(cfg.get('model_path'))
 
-    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000, include_avg=True)
+    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000, include_avg=False)
     app.run()
 
 

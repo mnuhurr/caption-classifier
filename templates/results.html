@@ -10,11 +10,25 @@ Caption: <input name="prompt" type="text" value="{{ default_prompt }}" size="40"
 <input type="submit" value="go!"/><br/>
 </form>
 
-classification result is: {{ result }} (p={{ probs }})<br/>
+classification result: {{ result }}<br/>
+<div id="clsScore"></div>
 
 <div id="tokenScores" style="width: 600px;"></div>
 <script>
-var data = [
+// classification
+var cls_data = [{
+    values: {{ probs }},
+    labels: ['audio', 'image'],
+    type: 'pie'
+}];
+
+var cls_layout = {
+    width: 400,
+    height: 300,
+};
+
+// tokens
+var token_data = [
 {% for sco in scores %}
     {
         x: {{ tokens|safe }},
@@ -23,18 +37,9 @@ var data = [
         type: 'bar'
     },
 {% endfor %}
-
-{% if avg_scores %}
-    {
-        x: {{ tokens|safe }},
-        y: {{ avg_scores }},
-        name: 'avg scores',
-        type: 'bar'
-    }
-{% endif %}
 ];
 
-var layout = { 
+var token_layout = { 
     title: {
         text: 'attention scores'
     },
@@ -49,7 +54,8 @@ var layout = {
 };
 
 
-Plotly.newPlot('tokenScores', data, layout);
+Plotly.newPlot('clsScore', cls_data, cls_layout);
+Plotly.newPlot('tokenScores', token_data, token_layout);
 </script>
 
 
