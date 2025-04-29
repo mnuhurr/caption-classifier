@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 from common import read_json, read_yaml, init_log
-from dataset import RandomSamplingDataset, TokenDataset, collate_batch
+from dataset import BalancedSamplingDataset, TokenDataset, collate_batch
 #from models.classifier import AttentionClassifierConfig, AttentionClassifier
 from models.classifier import ClassifierConfig, TransformerClassifier
 #from models.classifier import LSTMClassifierConfig, LSTMClassifier
@@ -88,6 +88,17 @@ def validate_epoch(model, loader, device):
     return val_loss / len(loader), confusion
 
 
+def flatten_tokens(tokens):
+    ftoks = {}
+
+    for mod in tokens:
+        ftoks[mod] = []
+        for ds in tokens[mod]:
+            ftoks[mod].extend(tokens[mod][ds])
+
+    return ftoks
+
+
 def main():
     args = parse_args()
     cfg = read_yaml(args.config)
@@ -101,6 +112,7 @@ def main():
     
     train_tokens = read_json(cache_dir / 'tokens_train.json')
     val_tokens = read_json(cache_dir / 'tokens_val.json')
+    val_tokens = flatten_tokens(val_tokens)
 
     epoch_len = cfg.get('epoch_len', 100_000)
     batch_size = cfg.get('batch_size', 64)
@@ -114,7 +126,7 @@ def main():
     
     log_interval = cfg.get('log_interval')
 
-    ds_train = RandomSamplingDataset(train_tokens, n_samples_in_epoch=epoch_len)
+    ds_train = BalancedSamplingDataset(train_tokens, n_samples_in_epoch=epoch_len)
     ds_val = TokenDataset(val_tokens)
 
     # no need to shuffle: the training dataset is sampling
