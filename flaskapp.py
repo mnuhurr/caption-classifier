@@ -25,7 +25,7 @@ class EndpointAction:
 
 
 class ClassifierApp:
-    def __init__(self, model, tokenizer, port=58000, device: torch.device | None = None, include_avg: bool = False):
+    def __init__(self, model, tokenizer, port=58000, device: torch.device | None = None):
         self.app = flask.Flask(__name__)
 
         self.device = device if device is not None else torch.device('cpu')
@@ -34,9 +34,6 @@ class ClassifierApp:
         self.model = model.to(self.device)
         self.model.eval()
         self.port = port
-
-        # some settings
-        self.include_avg = include_avg
 
         self.add_endpoint(endpoint='/', endpoint_name='front', handler=self.front, mimetype='text/html', methods=['GET', 'POST'])
 
@@ -55,17 +52,9 @@ class ClassifierApp:
 
         m = 'audio' if torch.argmax(y_pred[0], dim=-1).item() == 0 else 'image'
         p = torch.softmax(y_pred[0], dim=-1).cpu().numpy().tolist()
-
-        # average scores
-        if self.include_avg:
-            avg_scores = torch.stack([s[0, 0, 1:-1].cpu() for s in scores])
-            avg_scores = avg_scores.mean(dim=0).numpy().tolist()
-        else:
-            avg_scores = None
-
         scores = [s[0, 0, 1:-1].cpu().numpy().tolist() for s in scores]
 
-        return m, p, scores, avg_scores, decoded
+        return m, p, scores, decoded
 
     def front(self, **kwargs):
         if flask.request.method == 'GET':
@@ -73,12 +62,12 @@ class ClassifierApp:
         else:
             # analyze
             prompt = flask.request.form.get('prompt')
-            res, probs, scores, avg_scores, tokens = self.classify(prompt)
+            res, probs, scores, tokens = self.classify(prompt)
 
             # add the number to the token so that they don't get merged in the plotting
             tokens = list(map(lambda t: f'{t[0]}: {t[1]}', enumerate(tokens)))
             #tokens = '[' + ', '.join(map(lambda s: f'"{s}"', tokens)) + ']'
-            return flask.render_template('results.html', result=res, probs=probs, tokens=tokens, scores=scores, avg_scores=avg_scores)
+            return flask.render_template('dualresults.html', result=res, probs=probs, tokens=tokens, audio_scores=scores[0], image_scores=scores[1])
 
 
 def main(config_fn='settings.yaml'):
@@ -89,7 +78,7 @@ def main(config_fn='settings.yaml'):
 
     model = load_checkpoint(cfg.get('model_path'))
 
-    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000, include_avg=False)
+    app = ClassifierApp(model=model, tokenizer=tokenizer, port=58000)
     app.run()
 
 

@@ -9,8 +9,9 @@ import torch.nn.functional as F
 from common import read_json, read_yaml, init_log
 from dataset import BalancedSamplingDataset, TokenDataset, collate_batch
 #from models.classifier import AttentionClassifierConfig, AttentionClassifier
-from models.classifier import ClassifierConfig, TransformerClassifier
 #from models.classifier import LSTMClassifierConfig, LSTMClassifier
+#from models.classifier import ClassifierConfig, TransformerClassifier
+from models.classifier import ProjectorConfig, ProjectorClassifier
 from models.utils import model_size
 
 
@@ -141,6 +142,7 @@ def main():
         p_masking=cfg.get('p_masking', 0.0),
         mask_token_id=cfg.get('mask_token_id', 4))
     """
+    """
     model_cfg = ClassifierConfig(
         vocab_size=cfg.get('vocab_size', 10000),
         d_model=cfg.get('d_model', 256),
@@ -149,6 +151,7 @@ def main():
         dropout=cfg.get('dropout', 0.0),
         p_masking=cfg.get('p_masking', 0.0),
         mask_token_id=cfg.get('mask_token_id', 4))
+    """
 
     """
     model_cfg = LSTMClassifierConfig(
@@ -158,11 +161,17 @@ def main():
         n_layers=cfg.get('n_layers', 2),
         dropout=cfg.get('dropout', 0.0))
     """
+    model_cfg = ProjectorConfig(
+        vocab_size=cfg.get('vocab_size', 10000),
+        d_embedding=cfg.get('d_embedding', 64),
+        d_model=cfg.get('d_model', 256),
+        dropout=cfg.get('dropout', 0.0))
 
     print(model_cfg)
     #model = AttentionClassifier(model_cfg)
     #model = LSTMClassifier(model_cfg)
-    model = TransformerClassifier(model_cfg)
+    #model = TransformerClassifier(model_cfg)
+    model = ProjectorClassifier(model_cfg)
 
     logger.info(f'model size {model_size(model) / 1e6:.1f}M')
     model = model.to(device)
