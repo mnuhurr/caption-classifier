@@ -46,6 +46,30 @@ class RandomSamplingDataset(torch.utils.data.Dataset):
         return tokens, torch.as_tensor(m_idx, dtype=torch.int64)
 
 
+class BalancedSamplingDataset(torch.utils.data.Dataset):
+    def __init__(self, tokens, n_samples_in_epoch: int = 100000, seed: int | None = None):
+        self.tokens = tokens
+        self.modalities = sorted(self.tokens.keys())
+        self.n_samples = n_samples_in_epoch
+        self.rng = np.random.default_rng(seed)
+    
+    def __len__(self) -> int:
+        return self.n_samples
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        m_idx = idx % len(self.modalities)
+        m = self.modalities[m_idx]
+
+        idx = idx // len(self.modalities)
+        n_idx = idx % len(self.tokens[m])
+        n = sorted(self.tokens[m].keys())[n_idx]
+
+        nc = len(self.tokens[m][n])
+        k = self.rng.integers(nc)
+        tokens = torch.as_tensor(self.tokens[m][n][k], dtype=torch.int64)
+        return tokens, torch.as_tensor(m_idx, dtype=torch.int64)
+
+
 class TokenDataset(torch.utils.data.Dataset):
     def __init__(self, tokens):
         self.data = []

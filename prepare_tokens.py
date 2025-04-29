@@ -17,12 +17,14 @@ def main(config_fn='settings.yaml'):
         tokens = {}
         for modality, fn_list in cfg.get(f'{split}_captions', {}).items():
             if modality not in tokens:
-                tokens[modality] = []
+                tokens[modality] = {}
 
             for fn in fn_list:
+                fn_key = Path(fn).stem
+                tokens[modality][fn_key] = []
                 captions = Path(fn).read_text().splitlines()
                 file_tokens = [t.ids for t in tokenizer.encode_batch(captions)]
-                tokens[modality].extend(file_tokens)
+                tokens[modality][fn_key].extend(file_tokens)
 
         n_img = len(tokens['image'])
         n_aud = len(tokens['audio'])

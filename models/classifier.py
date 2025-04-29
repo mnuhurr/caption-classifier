@@ -1,5 +1,6 @@
-
+import math
 import torch
+import torch.nn.functional as F
 
 from dataclasses import dataclass
 
@@ -34,6 +35,16 @@ class LSTMClassifierConfig:
     d_lstm: int
     n_layers: int = 2
     dropout: float = 0.0
+
+
+@dataclass
+class ProjectorConfig:
+    vocab_size: int
+    d_embedding: int
+    d_model: int
+    n_heads: int = 1
+    dropout: float = 0.1
+    n_classes: int = 2
 
 
 class SelfAttention(torch.nn.Module):
@@ -141,7 +152,7 @@ class TransformerClassifier(torch.nn.Module):
             if m.bias is not None:
                 torch.nn.init.constant_(m.bias, 0.0)
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> tuple[torch.Tensor, list[torch.Tensor]]:
         if self.training and self.config.p_masking > 0:
             idx = torch.rand(x.shape, device=x.device) < self.config.p_masking
             x[idx & (x > self.config.mask_token_id)] = self.config.mask_token_id
@@ -188,5 +199,42 @@ class LSTMClassifier(torch.nn.Module):
         x = x1 + x2
         x = self.head(x)
         return x, None
+
+
+class ProjectorClassifier(torch.nn.Module):
+    def __init__(self, config: ProjectorConfig):
+        super().__init__()
+        self.config = config
+
+        self.embedding = torch.nn.Embedding(config.vocab_size, config.d_embedding)
+        
+        self.proj = torch.nn.ModuleList([
+            torch.nn.Linear(config.d_embedding, config.d_model) for _ in range(config.n_classes)
+        ])
+
+        #self.attn = torch.nn.MultiheadAttention(config.d_model, num_heads=1, bias=False, batch_first=True, dropout=config.dropout)
+        self.layer = EncoderBlock(
+            d_model=config.d_model,
+            n_heads=1,
+            dropout=config.dropout)
+
+        #pt = torch.randn(config.n_classes, config.d_model) / math.sqrt(config.d_model)
+        #self.register_parameter('class_tokens', torch.nn.Parameter(pt))
+        self.register_parameter('cls_token', torch.nn.Parameter(torch.randn(config.d_model) / math.sqrt(config.d_model)))
+
+    def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
+        #mask = mask.to(x.dtype) if mask is not None else torch.zeros_like(x)
+        x = self.embedding(x)
+
+        xp = [F.relu(proj(x)) for proj in self.proj]
+        #xp = [self.attn(xm, xm, xm, key_padding_mask=mask, need_weights=True, average_attn_weights=True) for xm in xp]
+        xp = [self.layer(xm, mask=mask) for xm in xp]
+        x = [xm[0] for xm in xp]
+        s = [xm[1] for xm in xp]
+
+        x = [(xm @ self.cls_token)[:, 0] for xm in x]
+        x = torch.stack(x, dim=-1)
+
+        return x, s
 
 

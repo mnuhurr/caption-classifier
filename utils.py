@@ -9,6 +9,7 @@ from tokenizers.normalizers import BertNormalizer
 from models.classifier import AttentionClassifierConfig, AttentionClassifier
 from models.classifier import LSTMClassifierConfig, LSTMClassifier
 from models.classifier import ClassifierConfig, TransformerClassifier
+from models.classifier import ProjectorConfig, ProjectorClassifier
 
 
 def load_tokenizer(tokenizer_path, max_length=None):
@@ -44,6 +45,8 @@ def load_checkpoint(filename: str | Path) -> torch.nn.Module:
         model = LSTMClassifier(cfg)
     elif isinstance(cfg, ClassifierConfig):
         model = TransformerClassifier(cfg)
+    elif isinstance(cfg, ProjectorConfig):
+        model = ProjectorClassifier(cfg)
 
     model.load_state_dict(ckpt['state_dict'])
 

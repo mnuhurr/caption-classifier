@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Caption classifier{% endblock %}
+{% block head %}
+<script src='https://cdn.plot.ly/plotly-3.0.1.min.js'></script>
+{% endblock %}
+{% block header %}<h1>Caption classifier</h1>{% endblock %}
+{% block content %}
+<form method="POST">
+Caption: <input name="prompt" type="text" value="{{ default_prompt }}" size="40"/>
+<input type="submit" value="go!"/><br/>
+</form>
+
+classification result: {{ result }}<br/>
+<div id="clsScore"></div>
+
+<div id="tokenScores" style="width: 600px;"></div>
+<script>
+// classification
+var cls_data = [{
+    values: {{ probs }},
+    labels: ['audio', 'image'],
+    type: 'pie',
+    sort: false,
+}];
+
+var cls_layout = {
+    width: 400,
+    height: 300,
+};
+
+// tokens
+var token_data = [
+    {
+        x: {{ tokens|safe }},
+        y: {{ audio_scores }},
+        name: 'audio scores',
+        type: 'bar'
+    },
+
+    {
+        x: {{ tokens|safe }},
+        y: {{ image_scores }},
+        name: 'image scores',
+        type: 'bar'
+    },
+];
+
+var token_layout = { 
+    title: {
+        text: 'attention scores'
+    },
+
+    xaxis: {
+        tickangle: -60
+    },
+
+    bargap: 0.2,
+    showlegend: true,
+    barmode: 'group'
+};
+
+
+Plotly.newPlot('clsScore', cls_data, cls_layout);
+Plotly.newPlot('tokenScores', token_data, token_layout);
+</script>
+
+
+
+{% endblock %}
+{% block footer %}{% endblock %}
+
