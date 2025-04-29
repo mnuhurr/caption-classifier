@@ -1,4 +1,5 @@
 import flask
+import numpy as np
 import torch
 
 from common import read_yaml
@@ -51,7 +52,8 @@ class ClassifierApp:
         decoded = [clean_token(self.tokenizer.id_to_token(t.item())) for t in tokens[0][1:-1]]
 
         m = 'audio' if torch.argmax(y_pred[0], dim=-1).item() == 0 else 'image'
-        p = torch.softmax(y_pred[0], dim=-1).cpu().numpy().tolist()
+        p = torch.softmax(y_pred[0], dim=-1).cpu().numpy()
+        p = np.round(p, decimals=3).tolist()
         scores = [s[0, 0, 1:-1].cpu().numpy().tolist() for s in scores]
 
         return m, p, scores, decoded
