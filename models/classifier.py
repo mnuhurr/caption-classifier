@@ -212,7 +212,11 @@ class ProjectorClassifier(torch.nn.Module):
             torch.nn.Linear(config.d_embedding, config.d_model) for _ in range(config.n_classes)
         ])
 
-        self.attn = torch.nn.MultiheadAttention(config.d_model, num_heads=1, bias=False, batch_first=True, dropout=config.dropout)
+        #self.attn = torch.nn.MultiheadAttention(config.d_model, num_heads=1, bias=False, batch_first=True, dropout=config.dropout)
+        self.layer = EncoderBlock(
+            d_model=config.d_model,
+            n_heads=1,
+            dropout=config.dropout)
 
         #pt = torch.randn(config.n_classes, config.d_model) / math.sqrt(config.d_model)
         #self.register_parameter('class_tokens', torch.nn.Parameter(pt))
@@ -223,7 +227,8 @@ class ProjectorClassifier(torch.nn.Module):
         x = self.embedding(x)
 
         xp = [F.relu(proj(x)) for proj in self.proj]
-        xp = [self.attn(xm, xm, xm, key_padding_mask=mask, need_weights=True, average_attn_weights=True) for xm in xp]
+        #xp = [self.attn(xm, xm, xm, key_padding_mask=mask, need_weights=True, average_attn_weights=True) for xm in xp]
+        xp = [self.layer(xm, mask=mask) for xm in xp]
         x = [xm[0] for xm in xp]
         s = [xm[1] for xm in xp]
 
